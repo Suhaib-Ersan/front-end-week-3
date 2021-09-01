@@ -22,11 +22,10 @@ class Cell extends React.Component {
         <div
           className="cellDiv"
           onClick={() => {
-            this.props.userMove(this.props.idx, this.props.oneCell);
+            this.props.userMove(this.props.cellNum, this.props.oneCell);
           }}
         >
           <span>{this.xOrO(this.props.oneCell)}</span>
-          
         </div>
       </>
     );

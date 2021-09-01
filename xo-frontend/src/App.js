@@ -1,5 +1,5 @@
 import "./App.css";
-import React from 'react';
+import React from "react";
 
 import Row from "react-bootstrap/Row";
 
@@ -7,8 +7,8 @@ import Cell from "./components/cell.js";
 
 import io from "socket.io-client";
 
-// const socket = io.connect('/backend.heroku.com'); // will need this
-
+const socket = io.connect("http://localhost:4000"); // will need this
+let arr = [];
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -19,75 +19,113 @@ class App extends React.Component {
         [0, 0, 0],
       ], // from backend
 
-      boardStateOneArr: [1, 2, 0, 0, 0, 0, 0, 0, 0], // change boardState to this in a function
+      boardStateOneArr: [0, 0, 0, 0, 0, 0, 0, 0, 0], // change boardState to this in a function
       count: 0,
-      gameState: "",
+      gameState: "on",
+      finalB: [],
 
-      id: "not set",
+      id: "x",
     };
+  }
+  componentDidMount() {
+    socket.emit("reconnect", {});
+    socket.on("prevOrder", (payload) => {
+      let { boardState, count, gameState } = payload;
+
+      // x on even and 0
+      // o on odd
+      let c = 0;
+      for (let i = 0; i < 3; i++) {
+        for (let z = 0; z < 3; z++) {
+          arr[c] = boardState[i][z];
+          c++;
+        }
+      }
+
+      this.setState({
+        boardState: boardState,
+        count: count,
+        gameState: gameState,
+        boardStateOneArr: arr,
+      });
+    });
   }
 
   userMove = (cellNumber, cellCurrentValue) => {
-    console.log();
-    if (this.state.count >= 8) {
-      alert("No moves left, please refresh page");
+    if (this.state.count > 8) {
+      alert("No moves left");
+      socket.emit("getAll", {
+        boardState: [
+          [0, 0, 0],
+          [0, 0, 0],
+          [0, 0, 0],
+        ],
+        count: 0,
+        gameState: "on",
+      });
     } else if (cellCurrentValue !== 0) {
       alert("this space is already taken");
     } else {
       let xOrOInCell = 0;
       if (this.state.id === "x") {
         xOrOInCell = 1;
+        this.setState({ id: "o" });
       } else {
         xOrOInCell = 2;
+        this.setState({ id: "x" });
       }
 
       let board = this.state.boardStateOneArr;
       board[cellNumber] = xOrOInCell;
 
-      let boardMatrix = [
-        [board[0], board[1], board[2]],
-        [board[3], board[4], board[5]],
-        [board[6], board[7], board[8]],
-      ];
+      let c = 0;
+      for (let i = 0; i < 3; i++) {
+        for (let z = 0; z < 3; z++) {
+          if (c == cellNumber) {
+            this.state.boardState[i][z] = board[cellNumber];
+          }
+          c++;
+        }
+      }
+      this.setState({
+        boardState: this.state.boardState,
+        count: this.state.count++,
+      });
 
-      this.state.count++;
-
-      let socketObj = {
-        boardState: boardMatrix,
-        gameState: this.state.gameState,
-        count: this.state.count,
-        id: this.state.id,
-      };
-
-      console.log(socketObj);
+      this.ioConnect();
     }
-  }
+  };
 
   ioConnect() {
-    io.on("order", (payload) => {
-      let { boardState, count, gameState, id } = payload;
+    socket.emit("getAll", {
+      boardState: this.state.boardState,
+      count: this.state.count,
+      gameState: this.state.gameState,
+    });
+
+    socket.on("order", (payload) => {
+      let { boardState, count, gameState } = payload;
 
       // x on even and 0
       // o on odd
-
-      let arr = [];
+      let c = 0;
       for (let i = 0; i < 3; i++) {
         for (let z = 0; z < 3; z++) {
-          arr.push(boardState[i][z]);
+          arr[c] = boardState[i][z];
+          c++;
         }
       }
 
-      this.setState = {
+      this.setState({
         boardState: boardState,
         count: count,
         gameState: gameState,
-        id: id,
 
         boardStateOneArr: arr,
-      };
+      });
 
       if (gameState === "x win") {
-        if (id === "x") {
+        if (this.state.id === "x") {
           alert("you win! hahahaaha :))");
         } else {
           alert("you lose! hahahaaha :((");
@@ -95,7 +133,7 @@ class App extends React.Component {
       }
 
       if (gameState === "o win") {
-        if (id === "o") {
+        if (this.state.id === "o") {
           alert("you win! hahahaaha :))");
         } else {
           alert("you lose! hahahaaha :((");
@@ -109,7 +147,13 @@ class App extends React.Component {
         <div className="boardContainer">
           <div className="board">
             {this.state.boardStateOneArr.map((oneCell, idx) => {
-              return <Cell oneCell={oneCell} cellNum={idx} userMove={this.userMove} />;
+              return (
+                <Cell
+                  oneCell={oneCell}
+                  cellNum={idx}
+                  userMove={this.userMove}
+                />
+              );
             })}
           </div>
         </div>
