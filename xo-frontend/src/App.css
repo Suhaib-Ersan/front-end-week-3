@@ -1,0 +1,47 @@
+.boardContainer {
+
+  height: 100vh;
+  width: 100vw;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.cellDiv {
+  height: 125px;
+  width: 125px;
+
+  background-color: rgb(216, 216, 216);
+
+  border: rgb(128, 128, 128) 5px solid;
+  border-radius: 0.8rem;
+
+  transition: 0.3s;
+  cursor: pointer;
+
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  
+}
+
+.cellDiv span {
+  font-size: 65px;
+
+  position: relative;
+
+  bottom: 1.7%;
+}
+
+.cellDiv:hover {
+  background-color: rgb(255, 80, 118);
+}
+
+.board {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  
+  gap: 0.75rem;
+}
